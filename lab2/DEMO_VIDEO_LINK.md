@@ -3,7 +3,7 @@
 ## Demonstration Video Link
 
 YouTube (Unlisted):\
-https://youtu.be/DpDnx-sxI0Y
+https://youtu.be/WzsKneFSaxE?si=XvOIKF1KDiBBOkBT
 
 This video demonstrates: - Uploading an image to the Blob container -
 Durable Function orchestration execution (Fan-Out/Fan-In) - Parallel
