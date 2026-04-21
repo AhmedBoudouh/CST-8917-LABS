@@ -1,0 +1,19 @@
+# Python / Functions artifacts
+.venv/
+__pycache__/
+*.pyc
+.python_packages/
+bin/
+obj/
+
+# Azure Functions local dev
+local.settings.json
+.azurite/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

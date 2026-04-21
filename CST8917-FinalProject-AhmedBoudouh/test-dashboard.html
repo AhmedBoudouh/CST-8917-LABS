@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CST8917 — Version A Test Dashboard</title>
+<style>
+  :root {
+    --bg: #0b0f17;
+    --panel: #141a26;
+    --panel-2: #1b2230;
+    --border: #242d3d;
+    --text: #e6ecf5;
+    --muted: #8e99ad;
+    --accent: #4aa3ff;
+    --green: #3cd97c;
+    --red: #ff5f6d;
+    --orange: #ffa64a;
+    --yellow: #f3d56b;
+    --purple: #a78bfa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+    padding: 24px;
+  }
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  h1 { margin: 0; font-size: 22px; }
+  header .meta { color: var(--muted); font-size: 13px; }
+  .config {
+    margin: 18px 0 8px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: center;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+  .config input {
+    width: 100%;
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 12px;
+  }
+  .cors-note {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 4px 0 16px;
+    line-height: 1.5;
+  }
+  .cors-note code {
+    background: var(--panel-2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .card .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .card h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .badge.idle    { background: #2a3648; color: var(--muted); }
+  .badge.running { background: rgba(74,163,255,0.15); color: var(--accent); }
+  .badge.ok      { background: rgba(60,217,124,0.15); color: var(--green); }
+  .badge.warn    { background: rgba(255,166,74,0.15); color: var(--orange); }
+  .badge.err     { background: rgba(255,95,109,0.15); color: var(--red); }
+  .badge.val     { background: rgba(243,213,107,0.15); color: var(--yellow); }
+  .desc {
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .expected {
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .expected b { color: var(--text); font-weight: 500; }
+  .payload {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11.5px;
+    color: #c7d2e0;
+    max-height: 90px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  button {
+    background: var(--accent);
+    color: #041026;
+    border: 0;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.15s;
+  }
+  button:hover { filter: brightness(1.1); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; filter: none; }
+  button.secondary {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  button.green { background: var(--green); color: #06240f; }
+  button.red   { background: var(--red);   color: #280008; }
+  .output {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11.5px;
+    color: #c7d2e0;
+    max-height: 240px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .output.hidden { display: none; }
+  .status-line {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 12.5px;
+    color: var(--muted);
+    padding-top: 2px;
+  }
+  .summary {
+    margin-top: 24px;
+    padding: 14px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+  }
+  .summary h3 { margin: 0 0 8px; font-size: 14px; }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .summary-item {
+    display: flex;
+    justify-content: space-between;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12.5px;
+  }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CST8917 Final — Version A Test Dashboard</h1>
+  <div class="meta">Ahmed Boudouh · 041162807 · 2026-04-18</div>
+</header>
+
+<div class="config">
+  <div>
+    <div style="color: var(--muted); font-size: 11px; margin-bottom: 4px;">Function App base URL</div>
+    <input id="base-url" value="https://cst8917-expense-durable-5233.azurewebsites.net">
+  </div>
+  <button class="secondary" onclick="runAll()">Run all scenarios</button>
+</div>
+
+<div class="cors-note">
+  <b>Note:</b> if the browser blocks requests with a CORS error, enable CORS on your Function App once:
+  Portal → <code>cst8917-expense-durable-5233</code> → API → CORS → add <code>*</code> (or
+  <code>null</code> for file://) → Save. The dashboard will then run end-to-end for the video demo.
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="summary">
+  <h3>Run summary</h3>
+  <div class="summary-grid" id="summary"></div>
+</div>
+
+<script>
+const POLL_INTERVAL_MS = 2000;
+const POLL_MAX_MS = 180000; // 3 min (enough for the 2-min timeout scenario)
+
+const scenarios = [
+  {
+    id: 1,
+    title: "Scenario 1 — Auto-approve (under $100)",
+    desc: "Valid expense below the $100 threshold skips manager approval and is auto-approved.",
+    expected: "status: <b>auto_approved</b>, escalated: false",
+    payload: { employee_name: "Ahmed", employee_email: "ahmedboudouh84@gmail.com", amount: 45.75, category: "meals", description: "Client lunch", manager_email: "ahmedboudouh84@gmail.com" },
+    flow: "submit-only",
+    expectedStatus: "auto_approved",
+  },
+  {
+    id: 2,
+    title: "Scenario 2 — Manager approves ($350)",
+    desc: "Above $100 → orchestrator waits for manager decision. We call /approve to simulate the click.",
+    expected: "status: <b>approved</b>, comment visible",
+    payload: { employee_name: "Ahmed", employee_email: "ahmedboudouh84@gmail.com", amount: 350, category: "software", description: "JetBrains license", manager_email: "ahmedboudouh84@gmail.com" },
+    flow: "submit-then-approve",
+    expectedStatus: "approved",
+  },
+  {
+    id: 3,
+    title: "Scenario 3 — Manager rejects ($899.99)",
+    desc: "Above $100 → we call /reject to simulate rejection with a comment.",
+    expected: "status: <b>rejected</b>, comment visible",
+    payload: { employee_name: "Ahmed", employee_email: "ahmedboudouh84@gmail.com", amount: 899.99, category: "equipment", description: "Monitor", manager_email: "ahmedboudouh84@gmail.com" },
+    flow: "submit-then-reject",
+    expectedStatus: "rejected",
+  },
+  {
+    id: 4,
+    title: "Scenario 4 — Escalation / timeout ($220)",
+    desc: "Above $100, no manager call → 2-minute timer fires, expense auto-approved and escalated.",
+    expected: "status: <b>escalated</b>, escalated: true (after ~2 min)",
+    payload: { employee_name: "Ahmed", employee_email: "ahmedboudouh84@gmail.com", amount: 220, category: "travel", description: "Train to Montreal", manager_email: "ahmedboudouh84@gmail.com" },
+    flow: "submit-wait-timeout",
+    expectedStatus: "escalated",
+    longRunning: true,
+  },
+  {
+    id: 5,
+    title: "Scenario 5 — Missing field",
+    desc: "Missing employee_email and manager_email → validator activity rejects.",
+    expected: "status: <b>rejected_validation</b>, errors list",
+    payload: { employee_name: "Ahmed", amount: 50, category: "supplies", description: "Pens" },
+    flow: "submit-only",
+    expectedStatus: "rejected_validation",
+  },
+  {
+    id: 6,
+    title: "Scenario 6 — Invalid category",
+    desc: "Category 'entertainment' not in allow-list → validator activity rejects.",
+    expected: "status: <b>rejected_validation</b>, errors list",
+    payload: { employee_name: "Ahmed", employee_email: "ahmedboudouh84@gmail.com", amount: 75, category: "entertainment", description: "Movie", manager_email: "ahmedboudouh84@gmail.com" },
+    flow: "submit-only",
+    expectedStatus: "rejected_validation",
+  },
+];
+
+const state = {}; // id -> { runtimeStatus, finalStatus, instanceId, ... }
+
+function render() {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+  for (const s of scenarios) {
+    const st = state[s.id] || {};
+    const badge = statusBadge(st);
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="head">
+        <h3>${s.title}</h3>
+        <span class="badge ${badge.cls}">${badge.text}</span>
+      </div>
+      <div class="desc">${s.desc}</div>
+      <div class="expected">Expected → ${s.expected}</div>
+      <div class="payload">${JSON.stringify(s.payload, null, 2)}</div>
+      <div class="btn-row" id="btn-row-${s.id}"></div>
+      <div class="status-line" id="status-${s.id}">
+        ${st.instanceId ? `instanceId: <code style="color:var(--accent);">${st.instanceId}</code>` : "Not started"}
+      </div>
+      <div class="output ${st.output ? "" : "hidden"}" id="output-${s.id}">${st.output || ""}</div>
+    `;
+    grid.appendChild(card);
+    renderButtons(s);
+  }
+  renderSummary();
+}
+
+function renderButtons(s) {
+  const row = document.getElementById("btn-row-" + s.id);
+  const st = state[s.id] || {};
+  const isRunning = st.runtimeStatus === "Running" || st.runtimeStatus === "Pending";
+  const disabled = isRunning ? "disabled" : "";
+  if (s.flow === "submit-only" || s.flow === "submit-wait-timeout") {
+    row.innerHTML = `<button ${disabled} onclick="runScenario(${s.id})">Run scenario</button>`;
+  } else if (s.flow === "submit-then-approve") {
+    row.innerHTML = `<button class="green" ${disabled} onclick="runScenario(${s.id})">Submit + Approve</button>`;
+  } else if (s.flow === "submit-then-reject") {
+    row.innerHTML = `<button class="red" ${disabled} onclick="runScenario(${s.id})">Submit + Reject</button>`;
+  }
+  if (st.instanceId) {
+    const base = document.getElementById("base-url").value.replace(/\/+$/, "");
+    const url = `${base}/runtime/webhooks/durabletask/instances/${st.instanceId}?taskHub=ExpenseApprovalHub&connection=Storage&code=SXx5vxSCFvj1DXh19IIXSkIBPVX_Yg0Mhh9h-fIvc0t_AzFueCiBGg==`;
+    row.innerHTML += ` <a class="btn-like" href="${url}" target="_blank"><button class="secondary">Status URL</button></a>`;
+  }
+}
+
+function statusBadge(st) {
+  if (!st.runtimeStatus && !st.error) return { cls: "idle", text: "Idle" };
+  if (st.error) return { cls: "err", text: "Error" };
+  if (st.runtimeStatus === "Running" || st.runtimeStatus === "Pending") return { cls: "running", text: st.runtimeStatus };
+  if (st.runtimeStatus === "Completed") {
+    switch (st.finalStatus) {
+      case "auto_approved":      return { cls: "ok",   text: "auto_approved" };
+      case "approved":           return { cls: "ok",   text: "approved" };
+      case "rejected":           return { cls: "err",  text: "rejected" };
+      case "escalated":          return { cls: "warn", text: "escalated" };
+      case "rejected_validation":return { cls: "val",  text: "rejected_validation" };
+      default:                   return { cls: "ok",   text: "Completed" };
+    }
+  }
+  return { cls: "warn", text: st.runtimeStatus };
+}
+
+function renderSummary() {
+  const wrap = document.getElementById("summary");
+  wrap.innerHTML = "";
+  for (const s of scenarios) {
+    const st = state[s.id] || {};
+    const badge = statusBadge(st);
+    const item = document.createElement("div");
+    item.className = "summary-item";
+    item.innerHTML = `<span>Sc${s.id}</span><span class="badge ${badge.cls}">${badge.text}</span>`;
+    wrap.appendChild(item);
+  }
+}
+
+async function runScenario(id) {
+  const s = scenarios.find(x => x.id === id);
+  state[s.id] = { runtimeStatus: "Pending", output: "Submitting…" };
+  render();
+
+  const base = document.getElementById("base-url").value.replace(/\/+$/, "");
+
+  let submitResp;
+  try {
+    const r = await fetch(`${base}/api/expenses`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(s.payload),
+    });
+    submitResp = await r.json();
+  } catch (e) {
+    state[s.id] = { error: true, output: "Fetch failed — likely CORS. Enable CORS on the function app (see note at top). Error: " + e.message };
+    render();
+    return;
+  }
+
+  const instanceId = submitResp.instanceId || submitResp.id;
+  state[s.id].instanceId = instanceId;
+  state[s.id].runtimeStatus = "Running";
+  state[s.id].output = "Submit response:\n" + JSON.stringify(submitResp, null, 2);
+  render();
+
+  // Step 2 — approve/reject if needed
+  if (s.flow === "submit-then-approve" || s.flow === "submit-then-reject") {
+    await sleep(3000);
+    const action = s.flow === "submit-then-approve" ? "approve" : "reject";
+    const comment = action === "approve" ? "Approved - budget available" : "One monitor per fiscal year";
+    try {
+      const r = await fetch(`${base}/api/expenses/${instanceId}/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ comment }),
+      });
+      const body = await r.json();
+      state[s.id].output += `\n\nManager ${action} response:\n` + JSON.stringify(body, null, 2);
+      render();
+    } catch (e) {
+      state[s.id].error = true;
+      state[s.id].output += "\n\nManager call failed: " + e.message;
+      render();
+      return;
+    }
+  }
+
+  // Step 3 — poll status
+  await pollStatus(s, instanceId, base);
+}
+
+async function pollStatus(s, instanceId, base) {
+  const start = Date.now();
+  while (Date.now() - start < POLL_MAX_MS) {
+    await sleep(POLL_INTERVAL_MS);
+    try {
+      const r = await fetch(`${base}/runtime/webhooks/durabletask/instances/${instanceId}?taskHub=ExpenseApprovalHub&connection=Storage&code=SXx5vxSCFvj1DXh19IIXSkIBPVX_Yg0Mhh9h-fIvc0t_AzFueCiBGg==`);
+      const body = await r.json();
+      state[s.id].runtimeStatus = body.runtimeStatus;
+      const out = body.output;
+      state[s.id].finalStatus = out && (out.status || out.final_status);
+      state[s.id].output += `\n\n[${new Date().toLocaleTimeString()}] Status poll:\n` + JSON.stringify(body, null, 2);
+      render();
+      if (body.runtimeStatus === "Completed" || body.runtimeStatus === "Failed" || body.runtimeStatus === "Terminated") {
+        return;
+      }
+    } catch (e) {
+      state[s.id].error = true;
+      state[s.id].output += "\n\nPoll failed: " + e.message;
+      render();
+      return;
+    }
+  }
+  state[s.id].output += "\n\nPolling timeout (3 min). Open the Status URL manually.";
+  render();
+}
+
+async function runAll() {
+  // Kick off scenario 4 first (it needs 2 min), then run the rest in parallel
+  runScenario(4);
+  await sleep(1000);
+  for (const s of scenarios.filter(x => x.id !== 4)) {
+    runScenario(s.id);
+    await sleep(500);
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+render();
+</script>
+</body>
+</html>

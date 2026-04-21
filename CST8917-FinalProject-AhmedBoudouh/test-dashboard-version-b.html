@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CST8917 — Version B Test Dashboard</title>
+<style>
+  :root {
+    --bg: #0b0f17;
+    --panel: #141a26;
+    --panel-2: #1b2230;
+    --border: #242d3d;
+    --text: #e6ecf5;
+    --muted: #8e99ad;
+    --accent: #4aa3ff;
+    --green: #3cd97c;
+    --red: #ff5f6d;
+    --orange: #ffa64a;
+    --yellow: #f3d56b;
+    --purple: #a78bfa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+    padding: 24px;
+  }
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  h1 { margin: 0; font-size: 22px; }
+  header .meta { color: var(--muted); font-size: 13px; }
+  h2 {
+    font-size: 16px;
+    margin: 32px 0 8px;
+    color: var(--accent);
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .lead {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+  .links {
+    margin: 14px 0 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .link-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 0.15s;
+  }
+  .link-card:hover { border-color: var(--accent); }
+  .link-card .label { color: var(--muted); font-size: 10.5px; letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 2px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .card .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .card h3 { margin: 0; font-size: 15px; font-weight: 600; }
+  .badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .badge.ok   { background: rgba(60,217,124,0.15);  color: var(--green); }
+  .badge.warn { background: rgba(255,166,74,0.15);  color: var(--orange); }
+  .badge.err  { background: rgba(255,95,109,0.15);  color: var(--red); }
+  .badge.val  { background: rgba(243,213,107,0.15); color: var(--yellow); }
+  .badge.pub  { background: rgba(167,139,250,0.15); color: var(--purple); }
+  .desc { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .expected { font-size: 11.5px; color: var(--muted); }
+  .expected b { color: var(--text); font-weight: 500; }
+  .payload {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11.5px;
+    color: #c7d2e0;
+    max-height: 140px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .prop-row {
+    display: flex;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--muted);
+    align-items: center;
+  }
+  .prop-row code {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  button {
+    background: var(--accent);
+    color: #041026;
+    border: 0;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.15s;
+  }
+  button:hover { filter: brightness(1.1); }
+  button.secondary {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  button.copied { background: var(--green); color: #06240f; }
+  .steps {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .steps b { color: var(--text); font-weight: 500; }
+  .steps ol { margin: 4px 0 0 16px; padding: 0; }
+  .steps li { margin: 2px 0; }
+  details { background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 12px; }
+  details summary { cursor: pointer; color: var(--accent); font-weight: 500; }
+  details p { color: var(--muted); line-height: 1.6; margin: 8px 0 0; }
+  code.inline { background: var(--panel-2); padding: 2px 6px; border-radius: 4px; color: var(--accent); font-size: 11.5px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CST8917 Final — Version B Test Dashboard</h1>
+  <div class="meta">Ahmed Boudouh · 041162807 · 2026-04-18 · Logic Apps + Service Bus</div>
+</header>
+
+<p class="lead" style="margin-top: 16px;">
+  Version B uses <b>Service Bus queue → Logic App → Azure Function validator → direct email</b>.
+  Azure Service Bus has no browser-accessible REST API with CORS, so this dashboard
+  works <b>by copy-paste</b>: click <b>Copy JSON</b> on a scenario, then paste it into
+  <b>Service Bus Explorer</b> in the Azure Portal. Each card tells you exactly where to
+  verify the outcome.
+</p>
+
+<h2>Quick links</h2>
+<div class="links">
+  <a class="link-card" target="_blank" href="https://portal.azure.com/#blade/Microsoft_Azure_Monitoring_Logs/BrowseResourceBlade/resourceType/microsoft.logic%2Fworkflows">
+    <div class="label">Logic Apps</div>
+    ExpenseApproval → Run history
+  </a>
+  <a class="link-card" target="_blank" href="https://portal.azure.com/#blade/HubsExtension/BrowseResourceBlade/resourceType/Microsoft.ServiceBus%2Fnamespaces">
+    <div class="label">Service Bus</div>
+    Namespace → expense-requests (queue) → Service Bus Explorer
+  </a>
+  <a class="link-card" target="_blank" href="https://portal.azure.com/#blade/HubsExtension/BrowseResourceBlade/resourceType/Microsoft.ServiceBus%2Fnamespaces">
+    <div class="label">Service Bus</div>
+    Topic expense-outcomes → Subscriptions (Peek)
+  </a>
+  <a class="link-card" target="_blank" href="https://outlook.live.com/mail/">
+    <div class="label">Inbox</div>
+    Verify employee notification emails
+  </a>
+</div>
+
+<h2>Part 1 — End-to-end scenarios (send to queue <code class="inline">expense-requests</code>)</h2>
+<p class="lead">
+  For each scenario: copy the JSON → open <b>expense-requests</b> queue → <b>Service Bus Explorer</b> → <b>Send messages</b> → Content Type <code class="inline">application/json</code> → paste body → Send. The Logic App picks it up within 30 sec. Check the Run history and your inbox.
+</p>
+
+<div class="grid" id="queue-grid"></div>
+
+<h2>Part 2 — Topic pub/sub with filtered subscriptions (send to topic <code class="inline">expense-outcomes</code>)</h2>
+<p class="lead">
+  These three messages demonstrate the <b>filtered subscription</b> pattern directly. Send each message to the <b>expense-outcomes topic</b> with the listed <b>custom property</b>. Then peek each subscription to show that each one only receives messages matching its filter.
+</p>
+
+<div class="grid" id="topic-grid"></div>
+
+<h2>Part 3 — Verification checklist</h2>
+<div class="card">
+  <div class="steps">
+    <b>After sending all 5 queue messages:</b>
+    <ol>
+      <li>Open <b>ExpenseApproval → Run history</b>. Expect 5 Succeeded runs.</li>
+      <li>Click each run and screenshot the green workflow graph.</li>
+      <li>Open your Gmail inbox — verify:
+        <ul>
+          <li>Scenario 1 → <b>Expense AUTO_APPROVED: $45</b></li>
+          <li>Scenario 2 → <b>Expense approval required</b> (manager email; Approve/Reject buttons may be absent due to cross-tenant actionable-message policy)</li>
+          <li>Scenario 3 → same as 2, plus escalation if no action taken</li>
+          <li>Scenario 4 → <b>Expense ESCALATED</b> (after 2-min timeout)</li>
+          <li>Scenario 5 → <b>Expense REJECTED (invalid data)</b> with error list</li>
+        </ul>
+      </li>
+      <li><b>After sending the 3 topic messages</b>: peek each subscription in the Azure Portal.
+        <ul>
+          <li><code class="inline">expense-approved</code> → 1 message</li>
+          <li><code class="inline">expense-rejected</code> → 1 message</li>
+          <li><code class="inline">expense-escalated</code> → 1 message</li>
+          <li><code class="inline">all-outcomes</code> → 3 messages (no filter)</li>
+        </ul>
+      </li>
+      <li>Screenshot each subscription's Peek result for the final report.</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+const queueScenarios = [
+  {
+    id: 1,
+    title: "Scenario 1 — Auto-approve (under $100)",
+    badge: { cls: "ok", text: "auto_approved" },
+    desc: "Amount below $100 threshold → Logic App skips manager approval and sends AUTO_APPROVED email directly to the employee.",
+    expected: "Email: <b>Expense AUTO_APPROVED: $45</b> — Logic App run: 1 green Succeeded branch (<code class=\"inline\">Notify_auto_approved</code>).",
+    payload: { employee_name: "Ahmed", employee_email: "ahmedboudouh84@gmail.com", manager_email: "ahmedboudouh84@gmail.com", amount: 45, category: "meals", description: "Client lunch" },
+  },
+  {
+    id: 2,
+    title: "Scenario 2 — Manager decision path ($350)",
+    badge: { cls: "warn", text: "waits manager" },
+    desc: "Amount above $100 → Logic App sends approval email to the manager (Send approval email webhook, 2-min timeout).",
+    expected: "Manager inbox receives approval request. If clicked within 2 min: Approve → <b>Notify_approved</b> email. Reject → <b>Notify_rejected</b> email. No click → Scenario 4 path.",
+    payload: { employee_name: "Ahmed", employee_email: "ahmedboudouh84@gmail.com", manager_email: "ahmedboudouh84@gmail.com", amount: 350, category: "software", description: "JetBrains license" },
+  },
+  {
+    id: 3,
+    title: "Scenario 3 — Manager rejection path ($899.99)",
+    badge: { cls: "err", text: "reject-expected" },
+    desc: "Same manager-decision flow; intended to demonstrate the rejection branch when the manager clicks Reject.",
+    expected: "If Reject clicked: <b>Notify_rejected</b> email with manager comment. If no click: escalation path (Scenario 4 behavior).",
+    payload: { employee_name: "Ahmed", employee_email: "ahmedboudouh84@gmail.com", manager_email: "ahmedboudouh84@gmail.com", amount: 899.99, category: "equipment", description: "Second monitor" },
+  },
+  {
+    id: 4,
+    title: "Scenario 4 — Escalation / timeout ($220)",
+    badge: { cls: "warn", text: "escalated" },
+    desc: "Amount above $100 with no manager response → 2-minute timer fires, default Switch case executes, escalation email sent.",
+    expected: "After ~2 min: email <b>Expense ESCALATED: $220</b>. Logic App run shows the Default branch highlighted green.",
+    payload: { employee_name: "Ahmed", employee_email: "ahmedboudouh84@gmail.com", manager_email: "noone@fakeaddress.invalid", amount: 220, category: "travel", description: "Train to Montreal" },
+  },
+  {
+    id: 5,
+    title: "Scenario 5 — Validation error (invalid category)",
+    badge: { cls: "val", text: "rejected_validation" },
+    desc: "Category 'entertainment' not in allow-list → validator Azure Function returns is_valid=false → Logic App takes the False branch.",
+    expected: "Email: <b>Expense REJECTED (invalid data)</b> with the validator's error list in the body. Logic App run: False branch green, True branch skipped.",
+    payload: { employee_name: "Ahmed", employee_email: "ahmedboudouh84@gmail.com", manager_email: "ahmedboudouh84@gmail.com", amount: 75, category: "entertainment", description: "Team movie night" },
+  },
+];
+
+const topicScenarios = [
+  {
+    id: "T1",
+    title: "Topic message 1 — status=approved",
+    badge: { cls: "ok", text: "filter: approved" },
+    desc: "Sent to the expense-outcomes topic with custom property status=approved. Should land in expense-approved subscription AND all-outcomes (but not expense-rejected/escalated).",
+    property: { name: "status", value: "approved" },
+    payload: { expense: { employee_name: "Ahmed", amount: 350, category: "software" }, final_status: "approved", reason: "Demo", escalated: false },
+  },
+  {
+    id: "T2",
+    title: "Topic message 2 — status=rejected",
+    badge: { cls: "err", text: "filter: rejected" },
+    desc: "Should land in expense-rejected subscription AND all-outcomes.",
+    property: { name: "status", value: "rejected" },
+    payload: { expense: { employee_name: "Ahmed", amount: 899, category: "equipment" }, final_status: "rejected", reason: "Demo rejection", escalated: false },
+  },
+  {
+    id: "T3",
+    title: "Topic message 3 — status=escalated",
+    badge: { cls: "warn", text: "filter: escalated" },
+    desc: "Should land in expense-escalated subscription AND all-outcomes.",
+    property: { name: "status", value: "escalated" },
+    payload: { expense: { employee_name: "Ahmed", amount: 220, category: "travel" }, final_status: "escalated", reason: "Demo timeout", escalated: true },
+  },
+];
+
+function renderQueue() {
+  const grid = document.getElementById("queue-grid");
+  grid.innerHTML = "";
+  for (const s of queueScenarios) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="head">
+        <h3>${s.title}</h3>
+        <span class="badge ${s.badge.cls}">${s.badge.text}</span>
+      </div>
+      <div class="desc">${s.desc}</div>
+      <div class="expected">Expected → ${s.expected}</div>
+      <div class="payload" id="q-payload-${s.id}">${JSON.stringify(s.payload, null, 2)}</div>
+      <div class="btn-row">
+        <button onclick="copy('q-payload-${s.id}', this)">Copy JSON</button>
+        <button class="secondary" onclick="alert('1. Portal → Service Bus namespace → Queues → expense-requests\\n2. Service Bus Explorer → Send messages tab\\n3. Content type: application/json\\n4. Paste JSON in Message body\\n5. Send')">How to paste</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+function renderTopic() {
+  const grid = document.getElementById("topic-grid");
+  grid.innerHTML = "";
+  for (const s of topicScenarios) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="head">
+        <h3>${s.title}</h3>
+        <span class="badge ${s.badge.cls}">${s.badge.text}</span>
+      </div>
+      <div class="desc">${s.desc}</div>
+      <div class="prop-row">Custom property → <code>${s.property.name}</code> = <code>${s.property.value}</code></div>
+      <div class="payload" id="t-payload-${s.id}">${JSON.stringify(s.payload, null, 2)}</div>
+      <div class="btn-row">
+        <button onclick="copy('t-payload-${s.id}', this)">Copy JSON</button>
+        <button class="secondary" onclick="copyText('${s.property.value}', this)">Copy status value</button>
+      </div>
+      <details>
+        <summary>How to send this to the topic</summary>
+        <p>
+          1. Portal → Service Bus namespace → Topics → <b>expense-outcomes</b><br>
+          2. Service Bus Explorer → <b>Send messages</b> tab<br>
+          3. Content type: <code class="inline">application/json</code><br>
+          4. Paste the JSON above as Message body<br>
+          5. Expand <b>Custom properties</b> → <b>Add property</b> → name=<code class="inline">status</code>, value=<code class="inline">${s.property.value}</code><br>
+          6. Click <b>Send</b>
+        </p>
+      </details>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+async function copy(elementId, btn) {
+  const text = document.getElementById(elementId).innerText;
+  await copyText(text, btn);
+}
+
+async function copyText(text, btn) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    // Fallback for file:// or unsupported browsers
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+  }
+  const orig = btn.textContent;
+  btn.textContent = "Copied ✓";
+  btn.classList.add("copied");
+  setTimeout(() => {
+    btn.textContent = orig;
+    btn.classList.remove("copied");
+  }, 1200);
+}
+
+renderQueue();
+renderTopic();
+</script>
+</body>
+</html>

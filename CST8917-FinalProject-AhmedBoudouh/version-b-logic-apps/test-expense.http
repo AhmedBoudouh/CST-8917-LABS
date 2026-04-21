@@ -1,0 +1,98 @@
+### CST8917 Final Project - Version B (Logic Apps + Service Bus) - Test Scenarios
+###
+### In Version B, expense requests enter the pipeline by being SENT TO THE
+### SERVICE BUS QUEUE `expense-requests`. The Logic App picks them up with
+### its "When a message is received" trigger. This file shows two things:
+###
+###   (A) Direct-call tests against the validator Function (useful for unit-
+###       testing validation logic in isolation).
+###   (B) Instructions for submitting a message to Service Bus via the
+###       Azure Portal / az CLI / Service Bus Explorer (that is what really
+###       exercises the Logic App in production).
+
+@validatorHost = http://localhost:7071
+@functionKey   = REPLACE_WITH_LOCAL_OR_AZURE_FUNCTION_KEY
+
+### ============================================================
+### (A) DIRECT VALIDATOR TESTS
+### ============================================================
+
+### Scenario 1: Valid expense under $100 (no manager approval needed)
+POST {{validatorHost}}/api/validate?code={{functionKey}}
+Content-Type: application/json
+
+{
+  "employee_name": "Ahmed Boudouh",
+  "employee_email": "ahmed@example.com",
+  "amount": 45.75,
+  "category": "meals",
+  "description": "Client lunch meeting",
+  "manager_email": "manager@example.com"
+}
+
+### Scenario 2: Valid expense >= $100 (manager approval required)
+POST {{validatorHost}}/api/validate?code={{functionKey}}
+Content-Type: application/json
+
+{
+  "employee_name": "Ahmed Boudouh",
+  "employee_email": "ahmed@example.com",
+  "amount": 350.00,
+  "category": "software",
+  "description": "Annual JetBrains license",
+  "manager_email": "manager@example.com"
+}
+
+### Scenario 3: Missing required field
+POST {{validatorHost}}/api/validate?code={{functionKey}}
+Content-Type: application/json
+
+{
+  "employee_name": "Ahmed Boudouh",
+  "amount": 50.00,
+  "category": "supplies",
+  "description": "Pens and notebooks"
+}
+
+### Scenario 4: Invalid category
+POST {{validatorHost}}/api/validate?code={{functionKey}}
+Content-Type: application/json
+
+{
+  "employee_name": "Ahmed Boudouh",
+  "employee_email": "ahmed@example.com",
+  "amount": 75.00,
+  "category": "entertainment",
+  "description": "Team movie night",
+  "manager_email": "manager@example.com"
+}
+
+### ============================================================
+### (B) END-TO-END TESTS VIA SERVICE BUS
+### ============================================================
+### To run the actual Logic App end-to-end, publish a message to the
+### `expense-requests` queue. Using az CLI (requires the Service Bus CLI
+### extension installed via  az extension add --name service-bus):
+###
+###   az servicebus queue message send \
+###     --resource-group rg-cst8917-final \
+###     --namespace-name <your-sb-namespace> \
+###     --queue-name expense-requests \
+###     --body '{"employee_name":"Ahmed Boudouh",...}'
+###
+### Or paste the JSON body into Service Bus Explorer -> "Send messages".
+###
+### Test each of the 6 required scenarios by posting the six JSON bodies
+### above to the queue:
+###   1. Valid < $100                     -> auto-approved
+###   2. Valid >= $100 + manager approves -> approved
+###   3. Valid >= $100 + manager rejects  -> rejected
+###   4. Valid >= $100 + no response      -> escalated (Logic App timeout)
+###   5. Missing required fields          -> validation rejection branch
+###   6. Invalid category                 -> validation rejection branch
+###
+### Monitor outcomes via:
+###   - Logic App run history (approved / rejected / escalated filters fire)
+###   - Service Bus topic subscriptions (expense-approved, expense-rejected,
+###     expense-escalated) - use Service Bus Explorer to peek messages.
+###   - Employee notification inbox (Outlook connector).

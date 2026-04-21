@@ -1,0 +1,111 @@
+### CST8917 Final Project - Version A (Durable Functions) - Test Scenarios
+### Host for local dev. Replace with your deployed URL in Azure, e.g.
+### @host = https://<your-func-app>.azurewebsites.net
+@host = http://localhost:7071
+
+### ---------------------------------------------------------------------
+### Scenario 1: Valid expense UNDER $100 -> should be AUTO-APPROVED
+### ---------------------------------------------------------------------
+POST {{host}}/api/expenses
+Content-Type: application/json
+
+{
+  "employee_name": "Ahmed Boudouh",
+  "employee_email": "ahmed@example.com",
+  "amount": 45.75,
+  "category": "meals",
+  "description": "Client lunch meeting",
+  "manager_email": "manager@example.com"
+}
+
+### ---------------------------------------------------------------------
+### Scenario 2: Valid expense >= $100, MANAGER APPROVES
+###   Step 2a: submit expense (copy the instanceId from the response)
+### ---------------------------------------------------------------------
+# @name submit2
+POST {{host}}/api/expenses
+Content-Type: application/json
+
+{
+  "employee_name": "Ahmed Boudouh",
+  "employee_email": "ahmed@example.com",
+  "amount": 350.00,
+  "category": "software",
+  "description": "Annual JetBrains license",
+  "manager_email": "manager@example.com"
+}
+
+### Step 2b: Manager approves (replace :instanceId with value from step 2a)
+POST {{host}}/api/expenses/{{submit2.response.body.instanceId}}/approve
+Content-Type: application/json
+
+{ "comment": "Approved - budget available" }
+
+### Step 2c: Check final status
+GET {{host}}/runtime/webhooks/durabletask/instances/{{submit2.response.body.instanceId}}
+
+### ---------------------------------------------------------------------
+### Scenario 3: Valid expense >= $100, MANAGER REJECTS
+### ---------------------------------------------------------------------
+# @name submit3
+POST {{host}}/api/expenses
+Content-Type: application/json
+
+{
+  "employee_name": "Ahmed Boudouh",
+  "employee_email": "ahmed@example.com",
+  "amount": 899.99,
+  "category": "equipment",
+  "description": "Second ultrawide monitor",
+  "manager_email": "manager@example.com"
+}
+
+### Manager rejects
+POST {{host}}/api/expenses/{{submit3.response.body.instanceId}}/reject
+Content-Type: application/json
+
+{ "comment": "One monitor per employee per fiscal year" }
+
+### ---------------------------------------------------------------------
+### Scenario 4: Valid expense >= $100, NO RESPONSE -> ESCALATED
+###   (Do NOT call approve/reject. Wait EXPENSE_TIMEOUT_MINUTES minutes.)
+### ---------------------------------------------------------------------
+POST {{host}}/api/expenses
+Content-Type: application/json
+
+{
+  "employee_name": "Ahmed Boudouh",
+  "employee_email": "ahmed@example.com",
+  "amount": 220.00,
+  "category": "travel",
+  "description": "Train ticket to Montreal for conference",
+  "manager_email": "manager@example.com"
+}
+
+### ---------------------------------------------------------------------
+### Scenario 5: Missing required field -> validation error
+### ---------------------------------------------------------------------
+POST {{host}}/api/expenses
+Content-Type: application/json
+
+{
+  "employee_name": "Ahmed Boudouh",
+  "amount": 50.00,
+  "category": "supplies",
+  "description": "Pens and notebooks"
+}
+
+### ---------------------------------------------------------------------
+### Scenario 6: Invalid category -> validation error
+### ---------------------------------------------------------------------
+POST {{host}}/api/expenses
+Content-Type: application/json
+
+{
+  "employee_name": "Ahmed Boudouh",
+  "employee_email": "ahmed@example.com",
+  "amount": 75.00,
+  "category": "entertainment",
+  "description": "Team movie night",
+  "manager_email": "manager@example.com"
+}
